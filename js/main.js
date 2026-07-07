@@ -43,17 +43,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const f = e.target;
         const name = f.name.value.trim();
         const ph = f.phone.value.trim();
+        const format = f.format.value || '—';
         if (!name || ph.length < 18) return;
 
-        // Telegram
+        // ====== 1. ОТПРАВКА В TELEGRAM (оставляем) ======
         const TOKEN = 'ВАШ_ТОКЕН';
         const CHAT = 'ВАШ_CHAT_ID';
         fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: CHAT, text: `🍸 Заявка\n\n${name}\n${ph}\n${f.format.value || '—'}` })
+            body: JSON.stringify({ chat_id: CHAT, text: `🍸 Заявка\n\n${name}\n${ph}\n${format}` })
         }).catch(() => {});
 
+        // ====== 2. ДОБАВЛЕНИЕ КОНТАКТА В WHATSAPP SENDER ======
+        const waApiUrl = 'https://botwanumsite-site.up.railway.app/api/contacts';
+        fetch(waApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: name,
+                phone: ph,
+                group_name: 'Заявки BARCRAFT'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('✅ Контакт добавлен в WhatsApp Sender:', data);
+        })
+        .catch(err => {
+            console.error('❌ Ошибка добавления контакта:', err);
+        });
+
+        // ====== 3. УСПЕШНОЕ СООБЩЕНИЕ НА СТРАНИЦЕ ======
         f.innerHTML = '<div class="form-success"><h3>Заявка отправлена ✓</h3><p>Напишем в WhatsApp в течение 30 минут</p></div>';
     });
 
